@@ -8,7 +8,6 @@ vendidas pela própria KaBuM. Somente coleta, terminal e armazenamento bruto.
 Com Python 3.10 ou superior, a partir da raiz do repositório:
 
 ```sh
-cd hardware-price-monitor
 python -m venv .venv
 ```
 
