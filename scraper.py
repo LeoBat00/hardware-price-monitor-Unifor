@@ -1,4 +1,4 @@
-"""Etapa 1: coleta de ofertas RTX série 50 vendidas pela própria KaBuM."""
+"""Coleta de placas de vídeo disponíveis e vendidas pela própria KaBuM."""
 
 import json
 import re
@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 
 
 URL_BASE = "https://www.kabum.com.br"
-URL_BUSCA = f"{URL_BASE}/busca/rtx-50"
+URL_BUSCA = f"{URL_BASE}/hardware/placa-de-video-vga"
 USER_AGENT = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
@@ -19,11 +19,13 @@ USER_AGENT = (
 # Seletor confirmado no HTML real. Os cartões visuais são placeholders.
 SELETOR_DADOS = 'script#__NEXT_DATA__[type="application/json"]'
 # Caminho dos produtos: props.pageProps.data.catalogServer.data
-# Nome: name | Preço à vista: priceWithDiscount
+# Na categoria, pageProps.data pode ser uma string JSON: decodificar antes
+# de acessar catalogServer. A busca da etapa 1 entregava esse campo como objeto.
+# Nome: name | Preço à vista: offer.priceWithDiscount em promoção pública ativa;
+# caso contrário, priceWithDiscount. Ambos são valores brutos fornecidos pelo site.
 # URL: /produto/{code}/{friendlyName}, conforme as URLs do script#productSchema.
 # Paginação: props.pageProps.data.catalogServer.pagination.next
 # Não há seletores de nome/preço nos cartões do HTML recebido por requests.
-PADRAO_RTX_50 = re.compile(r"\bRTX\s*50\d{2}(?:\s*Ti)?\b", re.IGNORECASE)
 
 
 def ler_catalogo(html):
@@ -35,7 +37,10 @@ def ler_catalogo(html):
     try:
         # Preserva a representação decimal original, sem normalizar os preços.
         dados = json.loads(bloco.get_text(), parse_float=str)
-        catalogo = dados["props"]["pageProps"]["data"]["catalogServer"]
+        dados_pagina = dados["props"]["pageProps"]["data"]
+        if isinstance(dados_pagina, str):
+            dados_pagina = json.loads(dados_pagina, parse_float=str)
+        catalogo = dados_pagina["catalogServer"]
         produtos = catalogo["data"]
         proxima = catalogo["pagination"]["next"]
         if not isinstance(produtos, list) or not isinstance(proxima, int):
@@ -43,6 +48,24 @@ def ler_catalogo(html):
     except (KeyError, TypeError, json.JSONDecodeError) as erro:
         raise ValueError("Estrutura do catálogo da KaBuM não reconhecida.") from erro
     return produtos, proxima
+
+
+def obter_preco(item):
+    """Seleciona o campo bruto da promoção vigente, sem calcular descontos."""
+    oferta = item.get("offer")
+    if isinstance(oferta, dict):
+        inicio = oferta.get("startsAt")
+        fim = oferta.get("endsAt")
+        quantidade = oferta.get("quantityAvailable")
+        if (
+            all(isinstance(valor, int) for valor in (inicio, fim, quantidade))
+            and inicio <= time.time() < fim
+            and quantidade > 0
+            and not oferta.get("isPrimeExclusive")
+            and not oferta.get("isLoggedUserExclusive")
+        ):
+            return oferta.get("priceWithDiscount")
+    return item.get("priceWithDiscount")
 
 
 def extrair_produto(item):
@@ -56,17 +79,16 @@ def extrair_produto(item):
     if not all(isinstance(campo, str) and campo.strip() for campo in (nome, categoria, vendedor)):
         return None, "incompletos"
 
-    # A busca também retorna notebooks, outras GPUs e vendedores de marketplace.
+    # Aceita todas as linhas de GPU, mas mantém categoria e vendedor da etapa 1.
     if (
-        not PADRAO_RTX_50.search(nome)
-        or "Placa de vídeo (VGA)" not in categoria
+        "Placa de vídeo (VGA)" not in categoria.split("/")
         or vendedor != "KaBuM!"
     ):
         return None, "fora_escopo"
     if item.get("available") is not True:
         return None, "indisponiveis"
 
-    preco = item.get("priceWithDiscount")
+    preco = obter_preco(item)
     codigo = item.get("code")
     slug = item.get("friendlyName")
     # Verificação mínima; mantém o preço como veio do JSON (ex.: "2799.99").
@@ -91,16 +113,17 @@ def extrair_produto(item):
     }, None
 
 
-def coletar_produtos(limite=30, max_paginas=5):
+def coletar_produtos(limite=100, max_paginas=5):
     produtos = []
     urls_vistas = set()
-    resumo = dict(encontrados=0, incompletos=0, fora_escopo=0, indisponiveis=0, repetidos=0)
+    resumo = dict(paginas=0, encontrados=0, incompletos=0, fora_escopo=0, indisponiveis=0, repetidos=0)
     pagina = 1
 
     with requests.Session() as sessao:
         sessao.headers.update({"User-Agent": USER_AGENT, "Accept-Language": "pt-BR,pt;q=0.9"})
         for _ in range(max_paginas):
             print(f"Consultando {URL_BUSCA} — página {pagina}...")
+            resumo["paginas"] += 1
             try:
                 resposta = sessao.get(
                     URL_BUSCA,
@@ -130,6 +153,7 @@ def coletar_produtos(limite=30, max_paginas=5):
             if not itens or proxima <= pagina:
                 break
             pagina = proxima
-            time.sleep(1)
+            if resumo["paginas"] < max_paginas:
+                time.sleep(1)
 
     return produtos, resumo

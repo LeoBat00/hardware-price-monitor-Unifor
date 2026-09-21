@@ -1,13 +1,16 @@
-# Monitoramento de preços — etapa 2
+# Monitoramento de preços — etapa 3
 
-Coleta automática de até 30 ofertas de placas de vídeo por fonte: KaBuM e
-Amazon Brasil. Somente coleta, terminal e armazenamento bruto em um CSV combinado.
+Coleta automática de até 100 ofertas disponíveis de placas de vídeo vendidas
+pela própria KaBuM. A amostra aceita diferentes linhas e fabricantes, sem a
+restrição anterior à RTX série 50. Somente coleta, terminal e armazenamento bruto.
 
-Estado da validação: a investigação da Amazon retornou HTTP 200 e permitiu
-implementar a extração. Na execução conjunta seguinte, a Amazon retornou
-HTTP 503; a KaBuM coletou 30 ofertas, mas o CSV combinado não foi gerado.
-A implementação da segunda fonte ainda depende de validação completa com
-acesso normal à Amazon. O CSV existente continua sendo da etapa 1.
+Nesta etapa, `main.py` consulta apenas a KaBuM. O scraper da Amazon e os
+relatórios das investigações anteriores continuam preservados, sem execução.
+
+Execução validada da etapa 3: 89 ofertas salvas após cinco páginas e 300
+registros examinados. Foram descartadas 211 ofertas de outros vendedores.
+O CSV foi conferido contra as respostas da coleta; três páginas de produto
+responderam HTTP 200 e confirmaram os nomes e preços da amostra verificada.
 
 ## Executar
 
@@ -27,17 +30,21 @@ python main.py
 
 Se o Linux disponibilizar apenas `python3`, use-o para criar o ambiente.
 O CSV é salvo em `data/dados_brutos.csv`, relativo à pasta do programa.
-Uma execução com ofertas válidas das duas fontes substitui o CSV anterior.
-Se uma fonte não fornecer ofertas ou a Amazon apresentar erro/bloqueio, o
-programa informa o problema, retorna código 1 e preserva o CSV anterior.
+Uma execução com ofertas válidas substitui o CSV anterior. Se nenhuma oferta
+for coletada, o programa retorna código 1 e preserva o arquivo existente.
+Falhas depois de uma página válida são informadas no terminal; os registros
+já coletados podem ser salvos. Uma amostra menor que 60 ofertas gera um aviso.
 
 ## KaBuM — fonte e mecanismo observado
 
-- Fonte: https://www.kabum.com.br/busca/rtx-50
+- Fonte: https://www.kabum.com.br/hardware/placa-de-video-vga
 - Parâmetros de paginação: `page_number` e `page_size=60`.
 - Seletor BeautifulSoup: `script#__NEXT_DATA__[type="application/json"]`.
-- Produtos: `props.pageProps.data.catalogServer.data`.
-- Campos: `name`, `priceWithDiscount`, `code` e `friendlyName`.
+- Produtos: `props.pageProps.data.catalogServer.data`. Na categoria,
+  `pageProps.data` pode ser texto JSON e é decodificado antes de acessar
+  `catalogServer`; a leitura também continua aceitando um objeto, como na busca.
+- Campos: `name`, `priceWithDiscount`, `offer.priceWithDiscount`, `code` e
+  `friendlyName`.
 - URL: `https://www.kabum.com.br/produto/{code}/{friendlyName}`,
   estrutura também observada nas ofertas do `script#productSchema`.
 - Próxima página: `props.pageProps.data.catalogServer.pagination.next`.
@@ -51,19 +58,34 @@ exemplo `2799.99`, sem conversão para número ou formatação monetária.
 Os nomes também são preservados. `loja` e `categoria` são constantes
 previstas no enunciado. Não há limpeza, análise ou preenchimento manual.
 
-A busca inclui outros produtos e vendedores de marketplace; eles são
-ignorados para que `loja = KaBuM` represente o vendedor real. A seleção
-confere categoria, modelo RTX 50, vendedor, disponibilidade e campos mínimos.
+A categoria distingue preço regular e promoção: `offer.priceWithDiscount`
+é escolhido quando a promoção está dentro de `startsAt`/`endsAt`, tem
+`quantityAvailable > 0` e não é exclusiva de Prime ou de usuário autenticado.
+Nos demais casos, usa-se `priceWithDiscount`. Nenhum desconto é calculado.
+Uma promoção selecionada sem preço válido faz o registro ser ignorado.
+
+A seleção confere a categoria `Placa de vídeo (VGA)`, o vendedor `KaBuM!`,
+a disponibilidade e os campos mínimos. A restrição de modelo RTX 50 foi
+removida. Ofertas de marketplace são ignoradas para que `loja = KaBuM`
+represente o vendedor real.
 URLs já coletadas não são repetidas ao percorrer páginas.
 
-A coleta encerra ao alcançar 30 ofertas, ao acabar a paginação ou após
+A coleta encerra ao alcançar 100 ofertas, ao acabar a paginação ou após
 cinco páginas. O contador de encontrados corresponde aos registros
 examinados até a parada. Válidos e ignorados somam esse contador.
+O contador de páginas inclui cada requisição de catálogo tentada.
+O timeout é de 30 segundos e o intervalo entre páginas é de um segundo.
 Falhas HTTP ou mudanças na estrutura são informadas no terminal; a função
 da KaBuM devolve ofertas já coletadas, se houver, mesmo após falha numa página.
-Essa lógica da etapa 1 foi preservada integralmente em `scraper.py`.
+O mecanismo de requisição, seletor, paginação e escrita de valores brutos
+da etapa 1 foi mantido, com os ajustes de escopo e leitura da categoria.
 
-## Amazon — fonte e mecanismo observado
+## Amazon — implementação anterior, fora da execução atual
+
+A investigação inicial retornou HTTP 200; a execução conjunta posterior
+retornou HTTP 503 da Amazon e não gerou um CSV combinado. O arquivo
+`scraper_amazon.py` foi preservado e não é importado por `main.py` nesta etapa.
+As informações abaixo documentam essa implementação anterior.
 
 - Fonte: https://www.amazon.com.br/s?k=placa+de+video+RTX
 - Resposta investigada: HTTP 200, com 48 cartões diretamente no HTML.
@@ -104,7 +126,8 @@ assumido pelo site; nenhum CEP é definido pelo scraper.
 
 ## Arquivos e saída
 
-`main.py` coordena as duas funções, exibe as ofertas e os contadores por fonte
-e salva `data/dados_brutos.csv` com as mesmas cinco colunas:
+`main.py` executa a coleta ampliada da KaBuM, exibe as ofertas, as páginas,
+os contadores de examinados e descartes e o total salvo. O arquivo
+`data/dados_brutos.csv` mantém as mesmas cinco colunas:
 `nome_produto`, `preco`, `loja`, `url`, `categoria`.
 Não foram adicionadas dependências nem etapas de análise ou tratamento.
