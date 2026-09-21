@@ -1,18 +1,75 @@
-# Monitoramento de preços — etapa 3
+# Monitoramento de preços — etapa 4
+
+Pré-processamento local de `data/dados_brutos.csv`, gerando separadamente
+`data/dados_tratados.csv`. O tratamento não consulta a web nem altera o bruto.
+
+Resultado validado: 89 registros de entrada, 86 tratados e oito colunas.
+A inspeção encontrou três acessórios na categoria de placas de vídeo; eles
+foram removidos apenas da base tratada. Cinco nomes tinham espaços repetidos.
+Não foram encontrados valores essenciais ausentes, preços inválidos ou duplicatas.
+
+## Executar o tratamento
+
+Com as dependências de `requirements.txt` instaladas, execute na raiz:
+
+```sh
+python tratamento.py
+```
+
+Não é necessário executar `main.py` antes: ele faz uma nova coleta e substitui
+o CSV bruto. Nesta etapa, o tratamento utiliza o arquivo já existente.
+
+`tratamento.py` apresenta o diagnóstico, limpa espaços de forma conservadora,
+converte preços para `float`, valida URLs e remove registros inutilizáveis e
+duplicados. As três colunas derivadas são `fabricante`, `modelo_gpu` e
+`familia_gpu`. Casos desconhecidos ou conflitantes recebem `Não identificado`.
+O SHA-256 do bruto é conferido antes da gravação do tratado.
+
+Regras relevantes:
+
+- Preços com ponto decimal e preços brasileiros como `R$ 2.799,90` são aceitos.
+  Valores ambíguos como `2.799` sem símbolo monetário, parcelas, zero, negativos
+  e valores não finitos são rejeitados; nenhum inválido é substituído por zero.
+- Nomes mantêm grafia, caixa, acentos e códigos. Somente espaços repetidos,
+  quebras de linha e caracteres invisíveis definidos no código são limpos.
+- URLs perdem apenas espaços externos; parâmetros são mantidos. A primeira
+  ocorrência utilizável de cada URL é preservada, sem deduplicar por nome.
+- Acessórios observados são identificados por nomes iniciados em `Suporte` ou
+  `Cabo`; essa regra é limitada e não pretende classificar qualquer catálogo.
+- Marcas são reconhecidas por palavras completas, sem diferenciar maiúsculas,
+  usando somente fabricantes observados. São marcas da placa, não do chip GPU.
+- Modelos usam expressões regulares para RTX/GTX, RX e Arc B; famílias seguem
+  seus prefixos. As regras refletem os nomes da amostra atual.
+
+O arquivo tratado tem as cinco colunas originais mais os três atributos derivados.
+Na execução validada, os 86 registros tiveram atributos identificados: 12 marcas,
+17 modelos e sete famílias distintos. Não foram calculados preços médios,
+rankings ou outras análises. Não há gráficos nem Data Mining nesta etapa.
+
+Verificações locais (dez testes, sem rede):
+
+```sh
+python -m unittest test_tratamento -v
+```
+
+## Coleta preservada — etapa 3
 
 Coleta automática de até 100 ofertas disponíveis de placas de vídeo vendidas
 pela própria KaBuM. A amostra aceita diferentes linhas e fabricantes, sem a
-restrição anterior à RTX série 50. Somente coleta, terminal e armazenamento bruto.
+restrição anterior à RTX série 50.
 
 Nesta etapa, `main.py` consulta apenas a KaBuM. O scraper da Amazon e os
 relatórios das investigações anteriores continuam preservados, sem execução.
 
-Execução validada da etapa 3: 89 ofertas salvas após cinco páginas e 300
+Execução validada da etapa 3: 89 registros salvos após cinco páginas e 300
 registros examinados. Foram descartadas 211 ofertas de outros vendedores.
 O CSV foi conferido contra as respostas da coleta; três páginas de produto
 responderam HTTP 200 e confirmaram os nomes e preços da amostra verificada.
+Na inspeção completa da etapa 4, foram encontrados três acessórios que a
+categoria da fonte havia incluído como placas. Os scrapers não foram alterados
+nesta etapa, e esses registros continuam preservados no arquivo bruto.
 
-## Executar
+## Executar uma nova coleta (opcional, independente do tratamento)
 
 Com Python 3.10 ou superior, a partir da raiz do repositório:
 
