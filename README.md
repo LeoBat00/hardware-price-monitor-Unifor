@@ -1,4 +1,52 @@
-# Monitoramento de preços — etapa 4
+# Monitoramento de preços — etapa 5
+
+## Análise local da amostra tratada
+
+```sh
+python analise.py
+```
+
+Lê exclusivamente `data/dados_tratados.csv`, valida a estrutura e calcula
+caracterização, distribuição, agrupamentos por fabricante/modelo/família,
+rankings, faixas de preço, outliers IQR e insights descritivos. Não consulta
+a web, não modifica os CSVs e não remove outliers.
+
+Os resultados são exibidos no terminal e gravados em
+`data/resultados_analise.json`, com valores numéricos sem arredondamento
+antecipado. A formatação monetária brasileira é apenas para apresentação.
+
+Métodos: quartis com interpolação linear, desvio-padrão amostral (`ddof=1`)
+e outliers estritamente fora de `[Q1 - 1,5 × IQR, Q3 + 1,5 × IQR]`.
+As faixas usam limites superiores inclusivos, definidos após inspecionar a
+base: 1.500, 3.000, 5.000, 8.000 e 12.000 reais, mais a faixa acima de 12.000.
+O primeiro intervalo inclui preços positivos até 1.500 reais.
+
+Para destacar variação dentro de modelos, o critério descritivo é ter pelo
+menos duas ofertas, amplitude de ao menos R$ 1.000 e de ao menos 20% do menor
+preço. Isso não representa significância estatística nem uma regra de compra.
+Grupos com uma oferta são mantidos e sinalizados. Empates nos cinco menores
+ou maiores preços preservam a ordem da base, mantendo cinco itens.
+
+Execução validada: 86 produtos, média de R$ 4.909,43, mediana de R$ 4.299,99,
+sete outliers superiores e nenhum inferior. O JSON inclui quatro insights
+gerados dos resultados, as tabelas completas e os nomes/URLs dos produtos.
+
+A amostra é apenas da KaBuM no momento da coleta. Diferenças de composição
+impedem interpretar médias como um efeito isolado de marca. Um modelo de GPU
+pode reunir placas com memória e construção diferentes. Não há conclusões
+sobre todo o mercado, causalidade ou desempenho das placas.
+
+Sete testes da análise, sem rede:
+
+```sh
+python -m unittest test_analise -v
+```
+
+Não foram criados gráficos, dashboard ou frontend. As instruções abaixo
+documentam o pré-processamento e a coleta já existentes; não é necessário
+executá-los novamente para analisar o CSV tratado atual.
+
+## Pré-processamento preservado — etapa 4
 
 Pré-processamento local de `data/dados_brutos.csv`, gerando separadamente
 `data/dados_tratados.csv`. O tratamento não consulta a web nem altera o bruto.
