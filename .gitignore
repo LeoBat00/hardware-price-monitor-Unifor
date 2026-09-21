@@ -1,0 +1,23 @@
+# Prompts locais (em qualquer nível do projeto)
+MD/
+
+# Cache e arquivos compilados do Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Ambientes virtuais
+.venv/
+venv/
+env/
+
+# Configurações locais e credenciais
+.env
+.env.*
+!.env.example
+
+# Arquivos do sistema operacional
+.DS_Store
+Thumbs.db
