@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Análise acadêmica de uma amostra de ofertas de placas de vídeo da KaBuM.">
+  <title>Monitoramento e Análise de Preços de Placas de Vídeo</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+  <script src="vendor/chart.umd.js" defer></script>
+  <script src="dados.js" defer></script>
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">▥</span> OBSERVATÓRIO GPU <span class="brand-divider">/</span> <span class="academic">Projeto acadêmico</span></div>
+    <nav aria-label="Navegação do dashboard"><a href="#visao-geral">Visão geral</a><a href="#insights">Insights</a><a href="#ofertas">Ofertas</a></nav>
+  </header>
+
+  <main id="conteudo">
+    <section id="visao-geral" aria-labelledby="titulo">
+      <div class="hero">
+        <div><p class="eyebrow">WEB SCRAPING &amp; DATA MINING</p><h1 id="titulo">Monitoramento e Análise de Preços de Placas de Vídeo</h1><p class="subtitle">Análise de ofertas coletadas na KaBuM</p></div>
+        <div class="sample-note"><span class="badge">AMOSTRA · KABUM</span><p>Um recorte das ofertas coletadas.<br>Não representa todo o mercado brasileiro.</p></div>
+      </div>
+      <p id="erro" class="error" role="alert" hidden></p>
+      <noscript><p class="error">Ative o JavaScript para visualizar os indicadores e os gráficos.</p></noscript>
+      <dl class="metrics" aria-label="Indicadores principais">
+        <div class="metric featured"><dt>Produtos analisados</dt><dd id="quantidade">—</dd><dd class="metric-note">Ofertas na amostra</dd></div>
+        <div class="metric"><dt>Preço médio</dt><dd id="preco-medio">—</dd><dd class="metric-note">Média dos preços coletados</dd></div>
+        <div class="metric"><dt>Menor preço</dt><dd id="preco-minimo">—</dd><dd class="metric-note">Menor valor observado</dd></div>
+        <div class="metric"><dt>Maior preço</dt><dd id="preco-maximo">—</dd><dd class="metric-note">Maior valor observado</dd></div>
+      </dl>
+    </section>
+
+    <section aria-labelledby="titulo-graficos">
+      <div class="section-heading"><h2 id="titulo-graficos">Um olhar sobre a amostra</h2><p>Distribuição e comparação entre modelos</p></div>
+      <div class="chart-grid">
+        <article class="panel">
+          <div class="panel-heading"><span class="panel-index" aria-hidden="true">01</span><h3 id="titulo-faixas">Distribuição das ofertas por faixa de preço</h3></div>
+          <p class="chart-description">Quantidade de ofertas em cada intervalo de preço.</p>
+          <div class="chart-wrap"><canvas id="grafico-faixas" role="img" aria-labelledby="titulo-faixas" aria-describedby="texto-faixas">Os valores estão disponíveis na tabela abaixo.</canvas></div>
+          <p id="texto-faixas" class="interpretation"></p>
+          <details><summary>Ver valores do gráfico</summary><div id="tabela-faixas" class="table-scroll" tabindex="0" role="region" aria-label="Valores por faixa de preço"></div></details>
+        </article>
+        <article class="panel">
+          <div class="panel-heading"><span class="panel-index" aria-hidden="true">02</span><h3 id="titulo-modelos">Quantidade de ofertas por modelo de GPU</h3></div>
+          <p class="chart-description">Todos os modelos, ordenados por quantidade de ofertas.</p>
+          <div class="chart-wrap"><canvas id="grafico-modelos" role="img" aria-labelledby="titulo-modelos" aria-describedby="texto-modelos">Os valores estão disponíveis na tabela abaixo.</canvas></div>
+          <p id="texto-modelos" class="interpretation"></p>
+          <details><summary>Ver valores do gráfico</summary><div id="tabela-modelos" class="table-scroll" tabindex="0" role="region" aria-label="Quantidades por modelo"></div></details>
+        </article>
+      </div>
+      <article class="panel price-panel">
+        <div class="panel-heading"><span class="panel-index" aria-hidden="true">03</span><h3 id="titulo-medias">Preço médio por modelo de GPU</h3></div>
+        <p class="chart-description">Médias já calculadas na análise, em reais. Grupos podem ter quantidades e versões diferentes.</p>
+        <div class="chart-wrap chart-wrap-price"><canvas id="grafico-medias" role="img" aria-labelledby="titulo-medias" aria-describedby="texto-medias">Os valores estão disponíveis na tabela abaixo.</canvas></div>
+        <p id="texto-medias" class="interpretation"></p>
+        <details><summary>Ver valores do gráfico</summary><div id="tabela-medias" class="table-scroll" tabindex="0" role="region" aria-label="Preços médios por modelo"></div></details>
+      </article>
+    </section>
+
+    <section id="insights" aria-labelledby="titulo-insights">
+      <div class="section-heading"><h2 id="titulo-insights">O que os dados mostram</h2><p>Insights da análise exploratória</p></div>
+      <ol id="lista-insights" class="insight-grid"></ol>
+    </section>
+
+    <section id="ofertas" aria-labelledby="titulo-outliers">
+      <div class="section-heading"><h2 id="titulo-outliers">Ofertas com preços extremos</h2><span id="total-outliers" class="count-badge"></span></div>
+      <div class="panel table-panel"><p class="table-note">Valores extremos identificados pelo método IQR. Não representam necessariamente erros.</p><div id="tabela-outliers" class="table-scroll" tabindex="0" role="region" aria-label="Ofertas com preços extremos"></div></div>
+    </section>
+
+    <section aria-labelledby="titulo-baratos">
+      <div class="section-heading"><h2 id="titulo-baratos">5 menores preços encontrados</h2><p>Ranking das ofertas coletadas</p></div>
+      <div class="panel table-panel"><div id="tabela-baratos" class="table-scroll" tabindex="0" role="region" aria-label="Produtos com menores preços"></div></div>
+    </section>
+
+    <aside class="scope-note" aria-labelledby="titulo-escopo"><h2 id="titulo-escopo">Como interpretar estes resultados</h2><p>Os resultados descrevem somente a amostra coletada na KaBuM. Não constituem uma comparação de desempenho nem um histórico de preços.</p><ul id="limitacoes"></ul></aside>
+  </main>
+  <footer><p>Dados coletados automaticamente da KaBuM para fins acadêmicos. Os preços representam o momento da coleta e podem sofrer alterações.</p><span>WEB SCRAPING · DATA MINING · UNIFOR</span></footer>
+</body>
+</html>

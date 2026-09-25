@@ -1,4 +1,67 @@
-# Monitoramento de preços — etapa 5
+# Monitoramento de preços — etapa 6
+
+## Dashboard local
+
+Abra **`dashboard/index.html`** diretamente no navegador. A página funciona
+sem internet, servidor ou instalação de dependências: HTML, CSS, JavaScript,
+Chart.js e os dados já estão incluídos na pasta `dashboard/`.
+
+O dashboard apresenta quatro indicadores (quantidade, média, mínimo e máximo),
+três gráficos com interpretações, os quatro insights da análise, todos os sete
+outliers e o ranking dos cinco menores preços. Os gráficos mostram:
+
+- Distribuição por faixa de preço: `faixas_preco`, com quantidade de ofertas.
+- Quantidade por modelo: `por_modelo`, com todos os 17 modelos.
+- Preço médio por modelo: `por_modelo.preco_medio`, em reais e em eixo separado.
+
+Os valores vêm de `data/resultados_analise.json`, convertido integralmente para
+`dashboard/dados.js`. O frontend apenas ordena e formata os resultados prontos;
+não recalcula a análise. As interpretações dos gráficos são preparadas no mesmo
+conversor a partir dos resultados existentes. Os insights são exibidos sem
+alterações de redação.
+
+Se o JSON for atualizado em outra etapa, regenere sua cópia estática:
+
+```sh
+python preparar_dashboard.py
+```
+
+O conversor usa somente a biblioteca padrão do Python, independe do diretório
+de execução e não altera o JSON, os CSVs ou os scripts das etapas anteriores.
+Não é necessário executar novamente coleta, tratamento ou análise para abrir
+o dashboard atual.
+
+O layout usa fundo claro, paleta consistente e se adapta a telas menores.
+Os gráficos têm títulos, descrições e tabelas alternativas acessíveis pelo
+teclado. As tabelas de produtos permitem rolagem horizontal em telas estreitas.
+Para uma captura com título, quatro indicadores e dois gráficos completos,
+use uma área de visualização de aproximadamente **1440 × 1000 pixels**.
+
+Chart.js **4.4.9** está incluído em `dashboard/vendor/chart.umd.js`, com sua
+licença MIT em `dashboard/vendor/LICENSE.md`; não há CDN em tempo de execução.
+A origem dos arquivos está documentada em `dashboard/vendor/README.md`.
+
+Validação opcional do dashboard no Chromium (não necessária para utilizá-lo):
+
+```sh
+python -m pip install playwright
+python -m playwright install chromium
+python -m unittest test_dashboard -v
+```
+
+Em Linux, o navegador de teste também requer suas bibliotecas de sistema;
+o Playwright informa as dependências ausentes. Seis testes verificam os dados,
+os indicadores, todos os valores dos gráficos, insights, tabelas, navegação
+por teclado e larguras de 768, 390 e 320 pixels. O navegador roda offline e
+os testes falham diante de erros no console ou solicitações HTTP(S).
+
+Limites: a página mostra uma cópia estática dos resultados, sem atualização
+automática de preços. A amostra é exclusivamente da KaBuM no momento da coleta;
+grupos têm tamanhos e composições diferentes. Outliers IQR não são erros
+comprovados. Os 17 modelos permanecem nos gráficos, inclusive grupos com uma
+única observação. A execução desta etapa não realiza scraping nem publica o site.
+
+## Análise preservada — etapa 5
 
 ## Análise local da amostra tratada
 
@@ -42,9 +105,8 @@ Sete testes da análise, sem rede:
 python -m unittest test_analise -v
 ```
 
-Não foram criados gráficos, dashboard ou frontend. As instruções abaixo
-documentam o pré-processamento e a coleta já existentes; não é necessário
-executá-los novamente para analisar o CSV tratado atual.
+As instruções abaixo documentam o pré-processamento e a coleta já existentes;
+não é necessário executá-los novamente para analisar o CSV tratado atual.
 
 ## Pré-processamento preservado — etapa 4
 
