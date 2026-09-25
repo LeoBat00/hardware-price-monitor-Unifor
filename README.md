@@ -1,4 +1,109 @@
-# Monitoramento de preços — etapa 6
+# Monitoramento e análise de preços de placas de vídeo
+
+Projeto acadêmico de Web Scraping e Data Mining para analisar uma amostra de
+ofertas de placas de vídeo da KaBuM. O projeto contém coleta, pré-processamento,
+análise exploratória e um dashboard estático.
+
+## Passo a passo para executar
+
+Execute os comandos a partir da raiz do projeto.
+
+### 1. Preparar o ambiente Python
+
+Crie um ambiente virtual:
+
+```sh
+python -m venv .venv
+```
+
+Ative o ambiente no Windows PowerShell:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+No Prompt de Comando do Windows:
+
+```bat
+.venv\Scripts\activate.bat
+```
+
+No Linux, macOS ou WSL:
+
+```sh
+source .venv/bin/activate
+```
+
+Instale as dependências:
+
+```sh
+python -m pip install -r requirements.txt
+```
+
+### 2. Processar os dados existentes
+
+O repositório já contém a coleta validada. Para reproduzir o tratamento e a
+análise sem consultar a web, execute na ordem:
+
+```sh
+python tratamento.py
+python analise.py
+python preparar_dashboard.py
+```
+
+Esse fluxo lê `data/dados_brutos.csv`, gera `data/dados_tratados.csv`, atualiza
+`data/resultados_analise.json` e prepara `dashboard/dados.js`.
+
+### 3. Abrir o dashboard
+
+Abra `dashboard/index.html` diretamente no navegador. Não é necessário iniciar
+servidor, backend ou API. O Chart.js e os dados ficam armazenados localmente.
+
+### 4. Executar os testes
+
+Os testes de tratamento e análise usam as mesmas dependências do projeto:
+
+```sh
+python -m unittest test_tratamento test_analise -v
+```
+
+O teste automatizado do dashboard é opcional e requer Playwright com Chromium:
+
+```sh
+python -m pip install playwright
+python -m playwright install chromium
+python -m unittest test_dashboard -v
+```
+
+### 5. Fazer uma nova coleta — opcional
+
+Uma nova coleta depende do acesso atual ao site e substitui
+`data/dados_brutos.csv`. Ela não é necessária para visualizar ou reproduzir a
+análise existente. Para executá-la conscientemente:
+
+```sh
+python main.py
+python tratamento.py
+python analise.py
+python preparar_dashboard.py
+```
+
+Depois, recarregue `dashboard/index.html`. A coleta deve manter frequência baixa
+e respeitar os termos e mecanismos de proteção da fonte.
+
+## Estrutura principal
+
+```text
+data/dados_brutos.csv
+        ↓
+tratamento.py → data/dados_tratados.csv
+        ↓
+analise.py → data/resultados_analise.json
+        ↓
+preparar_dashboard.py → dashboard/dados.js
+        ↓
+dashboard/index.html
+```
 
 ## Dashboard local
 

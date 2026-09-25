@@ -1,5 +1,5 @@
-# Prompts locais (em qualquer nível do projeto)
-MD/
+# Documentação local: prompts e resultados das etapas (não versionar)
+/MD/
 
 # Cache e arquivos compilados do Python
 __pycache__/
